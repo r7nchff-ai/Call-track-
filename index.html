@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f766e">
+<title>CalTrack</title>
+<style>
+:root{--primary:#0f766e;--primary2:#14b8a6;--bg:#f5f7f7;--card:#fff;--text:#17202a;--muted:#64748b;--line:#e2e8f0;--danger:#dc2626;--warn:#d97706;--success:#15803d;--shadow:0 8px 24px rgba(15,23,42,.07);--radius:18px}
+*{box-sizing:border-box}html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+button,input,select{font:inherit}button{cursor:pointer}.app{max-width:760px;margin:auto;min-height:100vh;padding-bottom:88px}
+header{padding:22px 18px 10px;display:flex;justify-content:space-between;align-items:center}
+.logo{font-weight:800;font-size:22px;color:var(--primary)}.date{font-size:12px;color:var(--muted)}
+main{padding:8px 14px}.view{display:none}.view.active{display:block}.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px;margin:10px 0}
+h1,h2,h3,p{margin-top:0}.title{font-size:25px;margin:8px 0 4px}.sub{color:var(--muted);font-size:14px;margin-bottom:16px}
+.kcal{font-size:38px;font-weight:800;letter-spacing:-1px}.kcal span{font-size:16px;font-weight:600;color:var(--muted)}
+.progress{height:12px;background:#e5e7eb;border-radius:99px;overflow:hidden;margin:13px 0}.progress>div{height:100%;background:linear-gradient(90deg,var(--primary),var(--primary2));border-radius:99px;width:0%;transition:.3s}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}.stat{padding:12px;border:1px solid var(--line);border-radius:14px}.stat b{display:block;font-size:18px}.stat small{color:var(--muted)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.btn{border:0;border-radius:13px;padding:13px 15px;font-weight:700;background:var(--primary);color:white}.btn.secondary{background:#e6fffb;color:#0f766e}.btn.ghost{background:#f1f5f9;color:#334155}.btn.danger{background:#fee2e2;color:#991b1b}.btn.full{width:100%}
+.form{display:grid;gap:12px}.field label{display:block;font-size:13px;font-weight:700;margin-bottom:6px}.field input,.field select{width:100%;padding:12px;border:1px solid #cbd5e1;border-radius:12px;background:white;outline:none}.field input:focus,.field select:focus{border-color:var(--primary);box-shadow:0 0 0 3px #ccfbf1}
+.nav{position:fixed;bottom:0;left:0;right:0;background:rgba(255,255,255,.96);backdrop-filter:blur(10px);border-top:1px solid var(--line);z-index:20}.nav-inner{max-width:760px;margin:auto;display:grid;grid-template-columns:repeat(4,1fr);padding:8px 8px calc(8px + env(safe-area-inset-bottom))}
+.nav button{border:0;background:none;color:#64748b;padding:7px 2px;font-size:11px}.nav button.active{color:var(--primary);font-weight:800}.nav .ico{display:block;font-size:20px;margin-bottom:2px}
+.food-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--line)}.food-row:last-child{border-bottom:0}.food-name{font-weight:700}.food-meta{font-size:12px;color:var(--muted);margin-top:3px}.meal-title{font-size:15px;font-weight:800;margin:18px 0 5px}
+.search{display:flex;gap:8px}.search input{flex:1}.list{max-height:270px;overflow:auto}.food-choice{display:flex;justify-content:space-between;gap:10px;padding:11px;border-bottom:1px solid var(--line);background:white}.food-choice button{border:0;background:#ccfbf1;color:#0f766e;border-radius:9px;padding:7px 10px;font-weight:700}
+.notice{padding:12px 13px;border-radius:13px;background:#f0fdfa;color:#115e59;font-size:13px;margin:10px 0}.notice.warn{background:#fff7ed;color:#9a3412}.notice.danger{background:#fef2f2;color:#991b1b}
+.empty{text-align:center;color:var(--muted);padding:25px 10px}.row{display:flex;justify-content:space-between;align-items:center;gap:10px}.pill{font-size:11px;border-radius:999px;padding:5px 9px;background:#f1f5f9;color:#475569}.hidden{display:none!important}
+canvas{width:100%;height:230px;display:block}.chart-tabs{display:flex;gap:7px;margin-bottom:8px}.chart-tabs button{border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px 12px;font-size:12px}.chart-tabs button.active{background:#ccfbf1;color:#0f766e;border-color:#99f6e4}
+.onboarding{min-height:100vh;display:flex;align-items:center;padding:20px}.onboarding .card{width:100%;max-width:520px;margin:auto}.brand{font-size:30px;font-weight:900;color:var(--primary);margin-bottom:4px}
+.small{font-size:12px;color:var(--muted);line-height:1.5}.danger-text{color:var(--danger)}.success-text{color:var(--success)}
+@media(min-width:700px){main{padding:10px 20px}.card{padding:20px}.app{background:#f8fafc}}
+</style>
+</head>
+<body>
+<div id="onboarding" class="onboarding hidden">
+  <div class="card">
+    <div class="brand">CalTrack</div>
+    <p class="sub">Atur pola makan, catat makanan, dan pantau kebiasaanmu.</p>
+    <div class="notice">Data disimpan hanya di perangkat ini menggunakan localStorage. Perhitungan kalori adalah estimasi dan bukan pengganti saran dokter atau ahli gizi.</div>
+    <form id="profileForm" class="form">
+      <div class="field"><label>Nama</label><input id="pName" required maxlength="60"></div>
+      <div class="grid2">
+        <div class="field"><label>Jenis kelamin</label><select id="pSex"><option value="female">Perempuan</option><option value="male">Laki-laki</option></select></div>
+        <div class="field"><label>Umur</label><input id="pAge" type="number" min="1" max="120" required></div>
+      </div>
+      <div class="grid2">
+        <div class="field"><label>Berat badan (kg)</label><input id="pWeight" type="number" min="1" max="500" step=".1" required></div>
+        <div class="field"><label>Tinggi badan (cm)</label><input id="pHeight" type="number" min="50" max="250" step=".1" required></div>
+      </div>
+      <div class="field"><label>Tingkat aktivitas</label><select id="pActivity">
+        <option value="1.2">Sangat ringan</option><option value="1.375">Ringan</option><option value="1.55">Sedang</option><option value="1.725">Aktif</option><option value="1.9">Sangat aktif</option>
+      </select></div>
+      <div class="field"><label>Tujuan</label><select id="pGoal">
+        <option value="maintain">Menjaga berat badan</option><option value="lose">Menurunkan berat badan</option><option value="gain">Menaikkan berat badan</option>
+      </select></div>
+      <button class="btn full">Mulai CalTrack</button>
+    </form>
+  </div>
+</div>
+
+<div id="app" class="app hidden">
+<header><div class="logo">CalTrack</div><div id="todayLabel" class="date"></div></header>
+<main>
+<section id="home" class="view active">
+  <div class="card">
+    <div class="sub" id="greeting"></div>
+    <h1 class="title">Ringkasan hari ini</h1>
+    <div><span class="kcal" id="consumed">0</span> <span>kcal dikonsumsi</span></div>
+    <div class="progress"><div id="calProgress"></div></div>
+    <div class="row"><span class="small">Target <b id="targetKcal">0</b> kcal</span><span class="small">Sisa <b id="remainingKcal">0</b> kcal</span></div>
+  </div>
+  <div class="stats">
+    <div class="stat"><small>Protein</small><b id="proteinTotal">0 g</b></div>
+    <div class="stat"><small>Karbo</small><b id="carbTotal">0 g</b></div>
+    <div class="stat"><small>Lemak</small><b id="fatTotal">0 g</b></div>
+  </div>
+  <div id="dailyNotice"></div>
+  <div class="grid2">
+    <button class="btn" onclick="openAddFood()">＋ Tambah Makanan</button>
+    <button class="btn secondary" onclick="showView('profile')">Profil & Target</button>
+  </div>
+  <div class="card"><div class="row"><h3>Catatan hari ini</h3><span class="pill" id="foodCount">0 item</span></div><div id="todayMeals"></div></div>
+</section>
+
+<section id="foods" class="view">
+  <h1 class="title">Makanan</h1><p class="sub">Cari makanan dari database sederhana atau masukkan sendiri.</p>
+  <div class="card">
+    <div class="search"><input id="foodSearch" placeholder="Cari: nasi, telur, ayam..."><button class="btn" onclick="renderFoodSearch()">Cari</button></div>
+    <div id="foodResults" class="list"></div>
+  </div>
+  <button class="btn full" onclick="openAddFood()">＋ Tambah makanan manual</button>
+  <div id="foodFormCard" class="card hidden">
+    <h3>Tambah makanan</h3>
+    <form id="foodForm" class="form">
+      <div class="field"><label>Waktu makan</label><select id="fMeal"><option value="Sarapan">Sarapan</option><option value="Makan siang">Makan siang</option><option value="Makan malam">Makan malam</option><option value="Snack">Snack</option></select></div>
+      <div class="field"><label>Nama makanan</label><input id="fName" required></div>
+      <div class="field"><label>Jumlah / porsi</label><input id="fPortion" placeholder="1 porsi" required></div>
+      <div class="grid2">
+        <div class="field"><label>Kalori (kcal)</label><input id="fCal" type="number" min="0" step=".1" required></div>
+        <div class="field"><label>Protein (g)</label><input id="fProtein" type="number" min="0" step=".1" value="0"></div>
+      </div>
+      <div class="grid2">
+        <div class="field"><label>Karbohidrat (g)</label><input id="fCarb" type="number" min="0" step=".1" value="0"></div>
+        <div class="field"><label>Lemak (g)</label><input id="fFat" type="number" min="0" step=".1" value="0"></div>
+      </div>
+      <div class="grid2"><button type="button" class="btn ghost" onclick="closeAddFood()">Batal</button><button class="btn">Simpan</button></div>
+    </form>
+  </div>
+</section>
+
+<section id="history" class="view">
+  <h1 class="title">Riwayat</h1><p class="sub">Lihat pola pencatatan kalori dan berat badan.</p>
+  <div class="card">
+    <div class="row"><h3>Kalori harian</h3><span class="pill" id="avgKcal">Rata-rata —</span></div>
+    <div class="chart-tabs"><button data-days="7" class="active" onclick="setChartDays(7,this)">7 hari</button><button data-days="30" onclick="setChartDays(30,this)">30 hari</button><button data-days="90" onclick="setChartDays(90,this)">90 hari</button></div>
+    <canvas id="calorieChart"></canvas>
+  </div>
+  <div class="card"><h3>Berat badan</h3><div id="weightSummary" class="small"></div><canvas id="weightChart"></canvas></div>
+  <div class="card"><h3>Ringkasan</h3><div id="historyTable"></div></div>
+</section>
+
+<section id="profile" class="view">
+  <h1 class="title">Profil & Target</h1><p class="sub">Perbarui data kapan saja. Perhitungan akan otomatis disesuaikan.</p>
+  <div class="card">
+    <form id="editProfileForm" class="form">
+      <div class="field"><label>Nama</label><input id="eName" required></div>
+      <div class="grid2"><div class="field"><label>Jenis kelamin</label><select id="eSex"><option value="female">Perempuan</option><option value="male">Laki-laki</option></select></div><div class="field"><label>Umur</label><input id="eAge" type="number" min="1" max="120" required></div></div>
+      <div class="grid2"><div class="field"><label>Berat (kg)</label><input id="eWeight" type="number" min="1" max="500" step=".1" required></div><div class="field"><label>Tinggi (cm)</label><input id="eHeight" type="number" min="50" max="250" step=".1" required></div></div>
+      <div class="field"><label>Aktivitas</label><select id="eActivity"><option value="1.2">Sangat ringan</option><option value="1.375">Ringan</option><option value="1.55">Sedang</option><option value="1.725">Aktif</option><option value="1.9">Sangat aktif</option></select></div>
+      <div class="field"><label>Tujuan</label><select id="eGoal"><option value="maintain">Menjaga berat badan</option><option value="lose">Menurunkan berat badan</option><option value="gain">Menaikkan berat badan</option></select></div>
+      <button class="btn">Simpan perubahan</button>
+    </form>
+  </div>
+  <div class="card"><h3>Perkiraan kebutuhan</h3><div id="calorieDetails"></div></div>
+  <div class="card">
+    <h3>Catat berat badan</h3>
+    <form id="weightForm" class="grid2"><div class="field"><label>Berat (kg)</label><input id="wValue" type="number" min="1" max="500" step=".1" required></div><div class="field"><label>Tanggal</label><input id="wDate" type="date" required></div><button class="btn" style="grid-column:1/-1">Simpan berat</button></form>
+  </div>
+  <div class="card"><h3>Privasi & keamanan</h3><p class="small">Data yang kamu masukkan digunakan untuk menghitung estimasi kebutuhan kalori dan membantu pencatatan makanan. Data versi ini hanya tersimpan di perangkat/browser ini.</p><button class="btn danger full" onclick="resetAll()">Hapus semua data</button></div>
+</section>
+</main>
+</div>
+
+<nav id="nav" class="nav hidden"><div class="nav-inner">
+<button onclick="showView('home')" data-view="home" class="active"><span class="ico">⌂</span>Beranda</button>
+<button onclick="showView('foods')" data-view="foods"><span class="ico">🍽</span>Makanan</button>
+<button onclick="showView('history')" data-view="history"><span class="ico">▥</span>Riwayat</button>
+<button onclick="showView('profile')" data-view="profile"><span class="ico">♙</span>Profil</button>
+</div></nav>
+
+<script>
+const KEY='caltrack_v1';
+const FOOD_DB=[
+['Nasi putih','1 porsi (150 g)',195,4,42,.4],['Telur ayam','1 butir',78,6.3,.6,5.3],['Ayam dada matang','100 g',165,31,0,3.6],
+['Ikan kembung','100 g',167,22,0,7.3],['Tempe','100 g',193,20,8,11],['Tahu','100 g',80,10,1.9,4],
+['Sayur campur','1 mangkuk',80,3,12,2],['Pisang','1 buah sedang',105,1.3,27,.4],['Apel','1 buah sedang',95,.5,25,.3],
+['Roti tawar','2 lembar',140,5,26,2],['Susu sapi','1 gelas (200 ml)',122,6.4,9.6,6.6],
+['Mi instan','1 bungkus',380,8,55,15],['Kopi hitam tanpa gula','1 cangkir',2,.3,0,0],['Teh tanpa gula','1 cangkir',2,0,0,0],
+['Biskuit','1 porsi',120,2,18,5]
+];
+let state={profile:null, foods:{}, weights:[]}, chartDays=7;
+
+function load(){try{const raw=localStorage.getItem(KEY);if(raw)state=JSON.parse(raw)}catch(e){}}
+function save(){localStorage.setItem(KEY,JSON.stringify(state))}
+function iso(d=new Date()){return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10)}
+function fmt(n){return Math.round(n*10)/10}
+function calc(p){
+ const bmr=(10*p.weight)+(6.25*p.height)-(5*p.age)+(p.sex==='male'?5:-161);
+ const tdee=bmr*Number(p.activity);
+ let target=tdee, lower=Math.max(1200,tdee*.8);
+ if(p.age<18){target=tdee; lower=Math.max(1400,tdee*.9)}
+ else if(p.goal==='lose') target=tdee*.85;
+ else if(p.goal==='gain') target=tdee*1.1;
+ target=Math.max(target,lower);
+ return {bmr,tdee,target,lower};
+}
+function todayFoods(){return state.foods[iso()]||[]}
+function totals(items=todayFoods()){return items.reduce((a,f)=>({cal:a.cal+Number(f.cal),p:a.p+Number(f.p),c:a.c+Number(f.c),fat:a.fat+Number(f.fat)}),{cal:0,p:0,c:0,fat:0})}
+function greeting(){let h=new Date().getHours();return h<11?'Selamat pagi':h<15?'Selamat siang':h<18?'Selamat sore':'Selamat malam'}
+function init(){
+ load();
+ if(!state.profile){document.getElementById('onboarding').classList.remove('hidden');return}
+ document.getElementById('app').classList.remove('hidden');document.getElementById('nav').classList.remove('hidden');
+ populateProfile();renderAll();
+}
+document.getElementById('profileForm').addEventListener('submit',e=>{e.preventDefault();state.profile=readProfile('p');save();document.getElementById('onboarding').classList.add('hidden');document.getElementById('app').classList.remove('hidden');document.getElementById('nav').classList.remove('hidden');renderAll()});
+document.getElementById('editProfileForm').addEventListener('submit',e=>{e.preventDefault();state.profile=readProfile('e');save();renderAll();alert('Profil berhasil disimpan.')});
+document.getElementById('foodForm').addEventListener('submit',e=>{e.preventDefault();const date=iso();if(!state.foods[date])state.foods[date]=[];state.foods[date].push({meal:fMeal.value,name:fName.value.trim(),portion:fPortion.value.trim(),cal:+fCal.value,p:+fProtein.value||0,c:+fCarb.value||0,fat:+fFat.value||0});save();e.target.reset();closeAddFood();renderAll();showView('home')});
+document.getElementById('weightForm').addEventListener('submit',e=>{e.preventDefault();state.weights=state.weights.filter(x=>x.date!==wDate.value);state.weights.push({date:wDate.value,weight:+wValue.value});state.weights.sort((a,b)=>a.date.localeCompare(b.date));save();wValue.value='';renderHistory();alert('Berat badan tersimpan.')});
+
+function readProfile(pre){return{name:document.getElementById(pre+'Name').value.trim(),sex:document.getElementById(pre+'Sex').value,age:+document.getElementById(pre+'Age').value,weight:+document.getElementById(pre+'Weight').value,height:+document.getElementById(pre+'Height').value,activity:document.getElementById(pre+'Activity').value,goal:document.getElementById(pre+'Goal').value}}
+function populateProfile(){let p=state.profile;for(const x of ['Name','Sex','Age','Weight','Height','Activity','Goal'])document.getElementById('e'+x).value=p[x.toLowerCase()];wDate.value=iso();if(state.weights.length&&!wValue.value)wValue.value=state.weights[state.weights.length-1].weight}
+function renderAll(){const p=state.profile,c=calc(p),t=totals();todayLabel.textContent=new Date().toLocaleDateString('id-ID',{weekday:'short',day:'numeric',month:'short'});greeting.textContent=`${greeting()}, ${p.name}`;consumed.textContent=fmt(t.cal);targetKcal.textContent=Math.round(c.target);remainingKcal.textContent=Math.max(0,Math.round(c.target-t.cal));calProgress.style.width=Math.min(100,(t.cal/c.target)*100)+'%';proteinTotal.textContent=fmt(t.p)+' g';carbTotal.textContent=fmt(t.c)+' g';fatTotal.textContent=fmt(t.fat)+' g';foodCount.textContent=todayFoods().length+' item';renderMeals();renderNotice(c.target,t.cal);renderFoodSearch();renderHistory();renderCalorieDetails(c)}
+function renderMeals(){const wrap=document.getElementById('todayMeals');const groups=['Sarapan','Makan siang','Makan malam','Snack'];wrap.innerHTML='';if(!todayFoods().length){wrap.innerHTML='<div class="empty">Belum ada makanan yang dicatat hari ini.</div>';return}groups.forEach(meal=>{const items=todayFoods().filter(x=>x.meal===meal);if(!items.length)return;const h=document.createElement('div');h.className='meal-title';h.textContent=meal;wrap.appendChild(h);items.forEach((f,i)=>{const row=document.createElement('div');row.className='food-row';row.innerHTML=`<div><div class="food-name">${esc(f.name)}</div><div class="food-meta">${esc(f.portion)} · ${fmt(f.p)}g P · ${fmt(f.c)}g K · ${fmt(f.fat)}g L</div></div><div><b>${Math.round(f.cal)}</b> kcal <button class="btn danger" style="padding:6px 8px;margin-left:5px" onclick="removeFood(${todayFoods().indexOf(f)})">×</button></div>`;wrap.appendChild(row)})})}
+function renderNotice(target,cal){const n=document.getElementById('dailyNotice');if(cal>target){n.innerHTML='<div class="notice">Target hari ini sudah terlampaui. Tidak apa-apa—gunakan catatan ini untuk melihat pola makan tanpa menghakimi diri sendiri.</div>'}else if(cal>=target*.9){n.innerHTML='<div class="notice">Kamu sudah mendekati target kalori hari ini.</div>'}else n.innerHTML=''}
+function renderCalorieDetails(c){const p=state.profile;let warn=p.age<18?'<div class="notice warn">Untuk pengguna di bawah 18 tahun, CalTrack tidak menetapkan defisit/surplus kalori. Pertimbangkan berdiskusi dengan orang tua/wali dan tenaga kesehatan untuk kebutuhan nutrisi.</div>':'';document.getElementById('calorieDetails').innerHTML=`${warn}<div class="stats"><div class="stat"><small>BMR</small><b>${Math.round(c.bmr)} kcal</b></div><div class="stat"><small>TDEE</small><b>${Math.round(c.tdee)} kcal</b></div><div class="stat"><small>Target</small><b>${Math.round(c.target)} kcal</b></div></div><p class="small" style="margin-top:12px">Perkiraan batas bawah yang digunakan aplikasi: ${Math.round(c.lower)} kcal/hari. Angka ini bukan resep medis dan dapat berbeda dari kebutuhan individu.</p>`}
+function openAddFood(){document.getElementById('foodFormCard').classList.remove('hidden');document.getElementById('fName').focus()}
+function closeAddFood(){document.getElementById('foodFormCard').classList.add('hidden')}
+function removeFood(i){if(!confirm('Hapus catatan makanan ini?'))return;state.foods[iso()].splice(i,1);save();renderAll()}
+function renderFoodSearch(){const q=(document.getElementById('foodSearch').value||'').toLowerCase();const arr=FOOD_DB.filter(f=>f[0].toLowerCase().includes(q));foodResults.innerHTML=arr.map((f,i)=>`<div class="food-choice"><div><b>${esc(f[0])}</b><div class="food-meta">${f[1]} · ${f[2]} kcal · P ${f[3]}g · K ${f[4]}g · L ${f[5]}g</div></div><button onclick="useFood(${FOOD_DB.indexOf(f)})">Tambah</button></div>`).join('')||'<div class="empty">Makanan tidak ditemukan. Gunakan input manual.</div>'}
+function useFood(i){const f=FOOD_DB[i];openAddFood();fName.value=f[0];fPortion.value=f[1];fCal.value=f[2];fProtein.value=f[3];fCarb.value=f[4];fFat.value=f[5]}
+function showView(id){document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active');document.querySelectorAll('.nav button').forEach(x=>x.classList.toggle('active',x.dataset.view===id));if(id==='history')renderHistory();window.scrollTo({top:0,behavior:'smooth'})}
+function setChartDays(n,btn){chartDays=n;document.querySelectorAll('.chart-tabs button').forEach(x=>x.classList.remove('active'));btn.classList.add('active');renderHistory()}
+function dates(n){const a=[];for(let i=n-1;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);a.push(iso(d))}return a}
+function renderHistory(){if(!state.profile)return;const ds=dates(chartDays);const vals=ds.map(d=>totals(state.foods[d]||[]).cal);const avg=vals.reduce((a,b)=>a+b,0)/vals.length;avgKcal.textContent='Rata-rata '+Math.round(avg)+' kcal';drawChart('calorieChart',ds,vals,state.profile?calc(state.profile).target:0,'kcal');const ws=ds.map(d=>{const x=state.weights.find(w=>w.date===d);return x?x.weight:null});const valid=state.weights.slice();weightSummary.textContent=valid.length?`Terakhir: ${valid[valid.length-1].weight} kg (${valid[valid.length-1].date})`:'Belum ada data berat badan.';drawChart('weightChart',ds,ws,null,'kg');historyTable.innerHTML=ds.slice(-14).reverse().map(d=>`<div class="food-row"><span>${new Date(d+'T00:00:00').toLocaleDateString('id-ID',{day:'2-digit',month:'short'})}</span><b>${Math.round(totals(state.foods[d]||[]).cal)} kcal</b></div>`).join('')}
+function drawChart(id,labels,data,target,unit){const c=document.getElementById(id),ctx=c.getContext('2d'),dpr=window.devicePixelRatio||1,w=c.clientWidth,h=230;c.width=w*dpr;c.height=h*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);const clean=data.filter(v=>v!=null), max=Math.max(target||0,...clean,1), min=Math.min(...clean.filter(v=>v!=null),0);const pad={l:36,r:12,t:15,b:28},cw=w-pad.l-pad.r,ch=h-pad.t-pad.b;ctx.strokeStyle='#e2e8f0';ctx.lineWidth=1;for(let j=0;j<4;j++){let y=pad.t+ch*j/3;ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(w-pad.r,y);ctx.stroke()}const x=i=>pad.l+(labels.length===1?cw/2:i*cw/(labels.length-1));const y=v=>pad.t+ch-(v-min)/(max-min||1)*ch;ctx.strokeStyle='#0f766e';ctx.lineWidth=2;ctx.beginPath();let started=false;data.forEach((v,i)=>{if(v==null){started=false;return}if(!started){ctx.moveTo(x(i),y(v));started=true}else ctx.lineTo(x(i),y(v))});ctx.stroke();ctx.fillStyle='#0f766e';data.forEach((v,i)=>{if(v==null)return;ctx.beginPath();ctx.arc(x(i),y(v),3,0,Math.PI*2);ctx.fill()});if(target){ctx.setLineDash([5,5]);ctx.strokeStyle='#94a3b8';ctx.beginPath();ctx.moveTo(pad.l,y(target));ctx.lineTo(w-pad.r,y(target));ctx.stroke();ctx.setLineDash([])}ctx.fillStyle='#64748b';ctx.font='11px system-ui';[0,Math.floor((labels.length-1)/2),labels.length-1].forEach(i=>{if(i<0)return;ctx.fillText(new Date(labels[i]+'T00:00:00').toLocaleDateString('id-ID',{day:'2-digit',month:'short'}),Math.max(pad.l,x(i)-18),h-8)});ctx.fillText(unit,pad.l,11)}
+function esc(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
+function resetAll(){if(confirm('Semua profil, makanan, dan riwayat akan dihapus dari perangkat ini. Lanjutkan?')){localStorage.removeItem(KEY);location.reload()}}
+window.addEventListener('resize',()=>{if(state.profile)renderHistory()});
+init();
+</script>
+</body>
+</html>
